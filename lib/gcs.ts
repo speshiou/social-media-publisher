@@ -3,7 +3,7 @@
 import { GenerateSignedPostPolicyV4Options, GetSignedUrlConfig, SignedPostPolicyV4Output, Storage } from "@google-cloud/storage";
 
 const storage = new Storage();
-const bucketName = process.env.GCS_BUCKET_NAME!
+const bucketName = process.env.GCS_BUCKET_NAME || ""
 
 export async function upload(fileName: string, blob: Blob) {
     const bucket = storage.bucket(bucketName);
