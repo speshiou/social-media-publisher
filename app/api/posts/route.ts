@@ -4,6 +4,8 @@ import { postTweet } from "@/lib/twitter";
 import { dateStamp } from "@/lib/utils";
 import { randomUUID } from "crypto";
 
+export const dynamic = 'force-dynamic'
+
 export async function POST(request: Request) {
     // TODO: auth and data checking
     const formData = await request.formData()
