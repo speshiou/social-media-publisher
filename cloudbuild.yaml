@@ -1,0 +1,25 @@
+steps:
+# Build the container image
+- name: 'gcr.io/cloud-builders/docker'
+  args: ['build', '-t', 'us-central1-docker.pkg.dev/$PROJECT_ID/$REPO_NAME:$COMMIT_SHA', '.']
+  env:
+      - "DOCKER_BUILDKIT=1"
+# Push the container image to Container Registry
+- name: 'gcr.io/cloud-builders/docker'
+  args: ['push', 'us-central1-docker.pkg.dev/$PROJECT_ID/$REPO_NAME:$COMMIT_SHA']
+# Deploy container image to Cloud Run
+- name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+  entrypoint: gcloud
+  args:
+  - 'run'
+  - 'deploy'
+  - $REPO_NAME
+  - '--image'
+  - 'us-central1-docker.pkg.dev.io/$PROJECT_ID/$REPO_NAME:$COMMIT_SHA'
+  - '--region=us-central1'
+  - '--port=3000'
+  - '--allow-unauthenticated'
+images:
+- 'us-central1-docker.pkg.dev.io/$PROJECT_ID/$REPO_NAME:$COMMIT_SHA'
+options:
+  logging: CLOUD_LOGGING_ONLY
