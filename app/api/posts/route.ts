@@ -1,5 +1,6 @@
 import { upload } from "@/lib/gcs";
 import TelegramApi from "@/lib/telegram/api";
+import { postTweet } from "@/lib/twitter";
 import { dateStamp } from "@/lib/utils";
 import { randomUUID } from "crypto";
 
@@ -21,8 +22,18 @@ export async function POST(request: Request) {
         }
     }
 
-    const api = new TelegramApi(process.env.TELEGRAM_BOT_API_TOKEN!)
-    await api.sendMediaGroup(parseInt(process.env.TELEGRAM_CHAT_ID!), imageUrls, content)
+    try {
+        const api = new TelegramApi(process.env.TELEGRAM_BOT_API_TOKEN!)
+        await api.sendMediaGroup(parseInt(process.env.TELEGRAM_CHAT_ID!), imageUrls, content)
+    } catch (e) {
+        console.log(e)
+    }
+    
+    try {
+        await postTweet(content, images as File[]);
+    } catch (e) {
+        console.log(e)
+    }
     
     return Response.json({ "status": "OK" })
 }

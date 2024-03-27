@@ -12,7 +12,8 @@
     "@google-cloud/storage": "^7.9.0",
     "next": "14.1.4",
     "react": "^18",
-    "react-dom": "^18"
+    "react-dom": "^18",
+    "twitter-api-v2": "^1.16.1"
   },
   "devDependencies": {
     "@types/node": "^20",
