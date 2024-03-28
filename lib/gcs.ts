@@ -20,7 +20,7 @@ export async function upload(fileName: string, blob: Blob) {
     // Get a v4 signed policy for uploading file
     const [response] = await file.generateSignedPostPolicyV4(options);
     await _upload(response, blob)
-    return await getSignedUrl(fileName)
+    return fileName
 }
 
 export async function getSignedUrl(fileName: string) {

@@ -13,10 +13,12 @@ if (process.env.X_API_KEY != null) {
 
   
 
-export async function postTweet(content: string, images: File[]) {
-    const tasks = images.map(async (file) => {
-        const buffer = Buffer.from(await file.arrayBuffer())
-        return client.v1.uploadMedia(buffer, { type: 'png' });
+export async function postTweet(content: string, images: string[]) {
+    const tasks = images.map(async (imageUrl) => {
+      const fileBlob = await fetch(new URL(imageUrl))
+    
+      const buffer = Buffer.from(await fileBlob.arrayBuffer())
+      return client.v1.uploadMedia(buffer, { type: 'png' });
     })
   // First, post all your images to Twitter
   const mediaIds = await Promise.all(tasks);

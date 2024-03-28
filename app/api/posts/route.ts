@@ -1,4 +1,5 @@
-import { upload } from "@/lib/gcs";
+import { createJob, dispatchJob, updateJobStatus } from "@/lib/data";
+import { getSignedUrl, upload } from "@/lib/gcs";
 import TelegramApi from "@/lib/telegram/api";
 import { postTweet } from "@/lib/twitter";
 import { dateStamp } from "@/lib/utils";
@@ -6,12 +7,48 @@ import { randomUUID } from "crypto";
 
 export const dynamic = 'force-dynamic'
 
+export async function GET(request: Request) {
+    const job = await dispatchJob()
+    if (!job) {
+        return Response.json({ "status": "NO_JOBS" })
+    }
+
+    const imageTasks = job.images?.map((image) => {
+        return getSignedUrl(image)
+    })
+
+    const imageUrls = await Promise.all(imageTasks || [])
+    try {
+        const api = new TelegramApi(process.env.TELEGRAM_BOT_API_TOKEN!)
+        await api.sendMediaGroup(parseInt(process.env.TELEGRAM_CHAT_ID!), imageUrls, job.text)
+    } catch (e) {
+        console.log(e)
+    }
+    
+    try {
+        await postTweet(job.text, imageUrls);
+    } catch (e) {
+        console.log(e)
+    }
+
+    await updateJobStatus(job._id, "succeeded")
+    return Response.json({ "status": "SUCCESS" })
+}
+
 export async function POST(request: Request) {
-    // TODO: auth and data checking
+    // TODO: auth checking
     const formData = await request.formData()
-    const content = formData.get('content') as string
+    const content = formData.get('content')
     const images = formData.getAll("image")
-    let imageUrls = []
+
+    if (!content || !images) {
+        return Response.json({ "status": "error" }, {
+            // accpet
+            status: 400,
+          })
+    }
+
+    let imageUrls: string[] = []
     if (images) {
         for (const file of images) {
             if (file instanceof File) {
@@ -24,18 +61,18 @@ export async function POST(request: Request) {
         }
     }
 
-    try {
-        const api = new TelegramApi(process.env.TELEGRAM_BOT_API_TOKEN!)
-        await api.sendMediaGroup(parseInt(process.env.TELEGRAM_CHAT_ID!), imageUrls, content)
-    } catch (e) {
-        console.log(e)
-    }
+    const newJob = {
+        create_time: new Date(),
+        update_time: new Date(),
+        status: "scheduled",
+        text: content as string,
+        images: imageUrls
+    } satisfies Job
+
+    await createJob(newJob)
     
-    try {
-        await postTweet(content, images as File[]);
-    } catch (e) {
-        console.log(e)
-    }
-    
-    return Response.json({ "status": "OK" })
+    return Response.json({ "status": "accepted" }, {
+        // accepted
+        status: 202,
+      })
 }
