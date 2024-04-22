@@ -14,6 +14,7 @@ import { WithId } from "mongodb";
 export const dynamic = "force-dynamic";
 
 const processJob = async (job: WithId<Job>) => {
+  var results: any = {};
   const imageTasks = job.images?.map((image) => {
     return getSignedUrl(image);
   });
@@ -26,17 +27,22 @@ const processJob = async (job: WithId<Job>) => {
       imageUrls,
       job.text
     );
+    results["telegram"] = true;
   } catch (e) {
+    results["telegram"] = false;
     console.log(e);
   }
 
   try {
     await postTweet(job.text, imageUrls);
+    results["twitter"] = true;
   } catch (e) {
+    results["twitter"] = false;
     console.log(e);
   }
 
   await updateJobStatus(job._id, "succeeded");
+  return results;
 };
 
 export async function GET(request: Request) {
@@ -92,7 +98,13 @@ export async function POST(request: Request) {
   if (instant) {
     const job = await getJobById(newJobId);
     if (job) {
-      processJob(job);
+      const results = processJob(job);
+      return Response.json(
+        { status: "succeeded", results: results },
+        {
+          status: 200,
+        }
+      );
     }
   }
 
