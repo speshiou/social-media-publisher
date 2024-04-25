@@ -11,7 +11,11 @@ if (process.env.X_API_KEY != null) {
   } satisfies TwitterApiTokens);
 }
 
-export async function postTweet(content: string, images: string[]) {
+export async function postTweet(
+  client: TwitterApi,
+  content: string,
+  images: string[]
+) {
   const tasks = images.map(async (imageUrl) => {
     const fileBlob = await fetch(new URL(imageUrl));
 

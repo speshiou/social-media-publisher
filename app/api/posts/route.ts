@@ -10,8 +10,27 @@ import { postTweet } from "@/lib/twitter";
 import { dateStamp } from "@/lib/utils";
 import { randomUUID } from "crypto";
 import { WithId } from "mongodb";
+import { TwitterApi, TwitterApiTokens } from "twitter-api-v2";
 
 export const dynamic = "force-dynamic";
+
+const getTwitterClient = (h: boolean) => {
+  if (h) {
+    return new TwitterApi({
+      appKey: process.env.H_X_API_KEY!,
+      appSecret: process.env.H_X_API_SECRET_KEY!,
+      accessToken: process.env.H_X_ACCESS_TOKEN!,
+      accessSecret: process.env.H_X_ACCESS_TOKEN_SECRET!,
+    } satisfies TwitterApiTokens);
+  } else {
+    return new TwitterApi({
+      appKey: process.env.X_API_KEY!,
+      appSecret: process.env.X_API_SECRET_KEY!,
+      accessToken: process.env.X_ACCESS_TOKEN!,
+      accessSecret: process.env.X_ACCESS_TOKEN_SECRET!,
+    } satisfies TwitterApiTokens);
+  }
+};
 
 const processJob = async (job: WithId<Job>) => {
   var results: any = {};
@@ -23,7 +42,11 @@ const processJob = async (job: WithId<Job>) => {
   try {
     const api = new TelegramApi(process.env.TELEGRAM_BOT_API_TOKEN!);
     await api.sendMediaGroup(
-      parseInt(process.env.TELEGRAM_CHAT_ID!),
+      parseInt(
+        job.h == true
+          ? process.env.H_TELEGRAM_CHAT_ID!
+          : process.env.TELEGRAM_CHAT_ID!
+      ),
       imageUrls,
       job.text
     );
@@ -34,7 +57,8 @@ const processJob = async (job: WithId<Job>) => {
   }
 
   try {
-    await postTweet(job.text, imageUrls);
+    const client = getTwitterClient(job.h == true);
+    await postTweet(client, job.text, imageUrls);
     results["twitter"] = true;
   } catch (e) {
     results["twitter"] = false;
@@ -47,11 +71,14 @@ const processJob = async (job: WithId<Job>) => {
 
 export async function GET(request: Request) {
   const job = await dispatchJob();
-  if (!job) {
-    return Response.json({ status: "NO_JOBS" });
+  if (job) {
+    await processJob(job);
   }
 
-  await processJob(job);
+  const jobH = await dispatchJob(true);
+  if (jobH) {
+    await processJob(jobH);
+  }
 
   return Response.json({ status: "SUCCESS" });
 }
@@ -62,6 +89,7 @@ export async function POST(request: Request) {
   const content = formData.get("content");
   const images = formData.getAll("image");
   const instant = formData.get("instant");
+  const h = formData.get("h");
 
   if (!content || !images) {
     return Response.json(
@@ -78,7 +106,10 @@ export async function POST(request: Request) {
     for (const file of images) {
       if (file instanceof File) {
         const buffer = Buffer.from(await file.arrayBuffer());
-        const filename = `${dateStamp()}/${randomUUID()}.png`;
+        let filename = `${dateStamp()}/${randomUUID()}.png`;
+        if (h) {
+          filename = `h/${filename}`;
+        }
         const blob = new Blob([buffer]);
         const url = await upload(filename, blob);
         imageUrls.push(url);
@@ -92,6 +123,7 @@ export async function POST(request: Request) {
     status: "scheduled",
     text: content as string,
     images: imageUrls,
+    h: h != null,
   } satisfies Job;
 
   const newJobId = await createJob(newJob);
