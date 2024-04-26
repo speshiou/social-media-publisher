@@ -17,7 +17,6 @@ function getFileNamePrefix(dirName) {
     const regex = /^\d+_(.*)/;
     // Using match() to find the substring
     const match = dirName.match(regex);
-    console.log(match)
     // Check if there is a match and get the result
     if (match) {
         const result = match[1];
@@ -25,7 +24,7 @@ function getFileNamePrefix(dirName) {
     } else {
         console.log("No match found");
     }
-
+    return null
 }
 
 function pickCovers(files, count) {
@@ -38,17 +37,24 @@ function pickCovers(files, count) {
     return Array.from(results);
 }
 
-async function main() {
-    const watermark = await Jimp.read(process.env.WATERMARK)
-    const baseDir = process.env.BATCH_IMAGE_DIR
-    console.log(baseDir)
+async function distAlbum(baseDir, watermark) {
+    console.log(`found ${baseDir}`)
     const dirs = baseDir.split("/")
     const dirName = dirs[dirs.length - 1]
     const filenamePrefix = getFileNamePrefix(dirName)
-    console.log(filenamePrefix)
-    const images = await findImages(process.env.BATCH_IMAGE_DIR)
+    if (!filenamePrefix) {
+        console.log(`${dirName} is not a valid album`)
+        return
+    }
+    const zipFileName = `${dirName}.zip`
     const distDir = path.join(baseDir, dirName)
+    const absZipPath = path.join(distDir, zipFileName)
     const coverDir = path.join(baseDir, "cover")
+    if (fs.existsSync(absZipPath)) {
+        console.log(`${zipFileName} already exists`)
+        return
+    }
+    const images = await findImages(baseDir)
     fs.rmSync(distDir, { recursive: true, force: true });
     fs.mkdirSync(distDir)
     fs.rmSync(coverDir, { recursive: true, force: true });
@@ -69,12 +75,23 @@ async function main() {
     while ((await findImages(distDir)).length != images.length) {
         console.log("waiting for images to be ready ...")
     }
-    execSync(`zip -r ${dirName}.zip * `, {cwd: distDir})
+    execSync(`zip -r ${zipFileName} * `, {cwd: distDir})
+    console.log(`created ${zipFileName}`)
     // covers
     const covers = pickCovers(markedImages, 4)
     for (const cover of covers) {
         const target = path.join(coverDir, path.basename(cover))
         fs.copyFileSync(cover, target);
+    }
+    console.log(`generated cover images`)
+}
+
+async function main() {
+    const watermark = await Jimp.read(process.env.WATERMARK)
+    const baseDir = process.env.BATCH_IMAGE_DIR
+    const dirs = fs.readdirSync(baseDir)
+    for (const dir of dirs) {
+        distAlbum(path.join(baseDir, dir), watermark)
     }
 }
 
