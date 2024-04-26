@@ -28,6 +28,16 @@ function getFileNamePrefix(dirName) {
 
 }
 
+function pickCovers(files, count) {
+    const results = new Set();
+    const n = Math.min(count, files.length)
+    while (results.size < n) {
+        const index = Math.floor(Math.random() * files.length);
+        results.add(files[index]);
+    }
+    return Array.from(results);
+}
+
 async function main() {
     const watermark = await Jimp.read(process.env.WATERMARK)
     const baseDir = process.env.BATCH_IMAGE_DIR
@@ -38,9 +48,13 @@ async function main() {
     console.log(filenamePrefix)
     const images = await findImages(process.env.BATCH_IMAGE_DIR)
     const distDir = path.join(baseDir, dirName)
+    const coverDir = path.join(baseDir, "cover")
     fs.rmSync(distDir, { recursive: true, force: true });
     fs.mkdirSync(distDir)
+    fs.rmSync(coverDir, { recursive: true, force: true });
+    fs.mkdirSync(coverDir)
     const font = await Jimp.loadFont(watermarkFont)
+    let markedImages = []
     for (let i = 0; i < images.length; i++) {
         const filename = images[i]
         const image = await Jimp.read(filename)
@@ -49,12 +63,19 @@ async function main() {
         const output = path.join(distDir, `${filenamePrefix}_${(i + 1).toString().padStart(3, "0")}.${image.getExtension()}`)
         image.write(output)
         console.log(output)
+        markedImages.push(output)
     }
     // zip
     while ((await findImages(distDir)).length != images.length) {
         console.log("waiting for images to be ready ...")
     }
     execSync(`zip -r ${dirName}.zip * `, {cwd: distDir})
+    // covers
+    const covers = pickCovers(markedImages, 4)
+    for (const cover of covers) {
+        const target = path.join(coverDir, path.basename(cover))
+        fs.copyFileSync(cover, target);
+    }
 }
 
 main().then(result => console.log(result))
