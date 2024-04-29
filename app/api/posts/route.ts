@@ -6,31 +6,12 @@ import {
 } from "@/lib/data";
 import { getSignedUrl, upload } from "@/lib/gcs";
 import TelegramApi from "@/lib/telegram/api";
-import { postTweet } from "@/lib/twitter";
+import { getTwitterClient, postTweet } from "@/lib/twitter";
 import { dateStamp } from "@/lib/utils";
 import { randomUUID } from "crypto";
 import { WithId } from "mongodb";
-import { TwitterApi, TwitterApiTokens } from "twitter-api-v2";
 
 export const dynamic = "force-dynamic";
-
-const getTwitterClient = (h: boolean) => {
-  if (h) {
-    return new TwitterApi({
-      appKey: process.env.H_X_API_KEY!,
-      appSecret: process.env.H_X_API_SECRET_KEY!,
-      accessToken: process.env.H_X_ACCESS_TOKEN!,
-      accessSecret: process.env.H_X_ACCESS_TOKEN_SECRET!,
-    } satisfies TwitterApiTokens);
-  } else {
-    return new TwitterApi({
-      appKey: process.env.X_API_KEY!,
-      appSecret: process.env.X_API_SECRET_KEY!,
-      accessToken: process.env.X_ACCESS_TOKEN!,
-      accessSecret: process.env.X_ACCESS_TOKEN_SECRET!,
-    } satisfies TwitterApiTokens);
-  }
-};
 
 const processJob = async (job: WithId<Job>) => {
   var results: any = {};
