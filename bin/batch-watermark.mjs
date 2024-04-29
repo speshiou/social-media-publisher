@@ -10,7 +10,9 @@ const x = 10
 const y = 10
 
 async function findImages(dir) {
-    return glob(`${dir}/*.{png,jpeg}`)
+    const images = await glob(`${dir}/*.{png,jpeg}`)
+    images.sort()
+    return images
 }
 
 function getFileNamePrefix(dirName) {
@@ -46,7 +48,7 @@ async function distAlbum(baseDir, watermark) {
         console.log(`${dirName} is not a valid album`)
         return
     }
-    const zipFileName = `${dirName}.zip`
+    const zipFileName = `${dirName}_by_${process.env.BATCH_PREFIX}.zip`
     const distDir = path.join(baseDir, dirName)
     const absZipPath = path.join(distDir, zipFileName)
     const coverDir = path.join(baseDir, "cover")
