@@ -57,7 +57,7 @@ async function push(dir) {
     console.log(dirName)
     const attrs = getAttrs(dirName)
     if (!attrs) {
-        return
+        return false
     }
     console.log(attrs)
     const [name, series, scene, h] = attrs
@@ -87,9 +87,9 @@ async function main() {
             const result = await push(path.join(baseDir, dirName))
             if (result) {
                 await fs.writeFile(absLockFile, "")
+                break
             }
         }
-        break
     }
 }
 
