@@ -40,7 +40,7 @@ export async function dispatchJob(h: boolean = false) {
   if (h) {
     filter["h"] = true;
   } else {
-    filter["$or"] = [{ h: { $exists: false } }, { h: null }];
+    filter["$or"] = [{ h: { $exists: false } }, { h: false }];
   }
   const updatedJob = await collection.findOneAndUpdate(
     filter,
