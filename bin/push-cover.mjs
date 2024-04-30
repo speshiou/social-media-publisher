@@ -64,7 +64,7 @@ async function push(dir) {
     console.log(`pushing ${dirName} ...`)
     const images = await glob(`${dir}/cover/*.{png,jpeg}`)
     images.sort()
-    const text = `${scene}\n#${name.replace(" ", "")} #${series.replace(" ", "")}`
+    const text = `${name} | ${scene}\n#${name.replace(" ", "")} #${series.replace(" ", "")}`
     console.log(text)
     await pushTelegram(text, images, h)
     await pushTwitter(text, images, h)

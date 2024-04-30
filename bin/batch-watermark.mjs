@@ -15,14 +15,18 @@ async function findImages(dir) {
     return images
 }
 
-function getFileNamePrefix(dirName) {
-    const regex = /^\d+_(.*)/;
+function getAttrs(dirName) {
+    const regex = /^(\d+)_(.*)\(.*\)_(.*)/;
     // Using match() to find the substring
     const match = dirName.match(regex);
     // Check if there is a match and get the result
     if (match) {
-        const result = match[1];
-        return `${process.env.BATCH_PREFIX}_${result}`
+        const date = match[1];
+        const name = match[2];
+        let scene = match[3];
+        const h = scene.includes(process.env.H_KEY)
+        scene = scene.replace(`_${process.env.H_KEY}`, "")
+        return [date, name, scene]
     } else {
         console.log("No match found");
     }
@@ -43,13 +47,16 @@ async function distAlbum(baseDir, watermark) {
     console.log(`found ${baseDir}`)
     const dirs = baseDir.split("/")
     const dirName = dirs[dirs.length - 1]
-    const filenamePrefix = getFileNamePrefix(dirName)
-    if (!filenamePrefix) {
+    const attrs = getAttrs(dirName)
+    if (!attrs) {
         console.log(`${dirName} is not a valid album`)
         return
     }
-    const zipFileName = `${dirName}_by_${process.env.BATCH_PREFIX}.zip`
-    const distDir = path.join(baseDir, dirName)
+    const [date, name, scene] = attrs
+    const key = `${date}_${name}_${scene}_by_${process.env.BATCH_PREFIX}`
+    const filenamePrefix = `${name}_${scene}_by_${process.env.BATCH_PREFIX}`
+    const zipFileName = `${key}.zip`
+    const distDir = path.join(baseDir, key)
     const absZipPath = path.join(distDir, zipFileName)
     const coverDir = path.join(baseDir, "cover")
     if (fs.existsSync(absZipPath)) {
@@ -93,7 +100,7 @@ async function main() {
     const baseDir = process.env.BATCH_IMAGE_DIR
     const dirs = fs.readdirSync(baseDir)
     for (const dir of dirs) {
-        distAlbum(path.join(baseDir, dir), watermark)
+        await distAlbum(path.join(baseDir, dir), watermark)
     }
 }
 
