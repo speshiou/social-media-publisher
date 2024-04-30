@@ -56,7 +56,7 @@ async function distAlbum(baseDir, watermark) {
     const key = `${date}_${name}_${scene}_by_${process.env.BATCH_PREFIX}`
     const filenamePrefix = `${name}_${scene}_by_${process.env.BATCH_PREFIX}`
     const zipFileName = `${key}.zip`
-    const distDir = path.join(baseDir, key)
+    const distDir = path.join(baseDir, "dist")
     const absZipPath = path.join(distDir, zipFileName)
     const coverDir = path.join(baseDir, "cover")
     if (fs.existsSync(absZipPath)) {
