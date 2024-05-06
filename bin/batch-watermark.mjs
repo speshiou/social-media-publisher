@@ -53,7 +53,7 @@ async function distAlbum(baseDir, watermark) {
         return
     }
     const [date, name, scene] = attrs
-    const key = `${date}_${name}_${scene}_by_${process.env.BATCH_PREFIX}`
+    const key = `${date}_${name}_${scene}_by_${process.env.BATCH_PREFIX}`.replaceAll(" ", "_")
     const filenamePrefix = `${name}_${scene}_by_${process.env.BATCH_PREFIX}`
     const zipFileName = `${key}.zip`
     const distDir = path.join(baseDir, "dist")
