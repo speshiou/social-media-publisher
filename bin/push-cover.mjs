@@ -1,10 +1,24 @@
 import fs from 'fs/promises'
+import readline from 'readline'
+import util from 'util'
 import { glob } from 'glob';
 import path from 'path'
 import * as tsImport from 'ts-import';
 
 const telegramApiLibPath = "lib/telegram/api.ts"
 const twitterApiLibPath = "lib/twitter.ts"
+
+async function input(query) {
+    const rl = readline.createInterface({
+        input: process.stdin,
+        output: process.stdout,
+    });
+
+    return new Promise(resolve => rl.question(`${query} `, ans => {
+        rl.close();
+        resolve(ans);
+    }))
+}
 
 function getAttrs(dirName) {
     const regex = /^\d+_(.*)\((.*)\)_(.*)/;
@@ -62,14 +76,23 @@ async function push(dir) {
     console.log(attrs)
     const [name, series, scene, h] = attrs
     console.log(`pushing ${dirName} ...`)
-    const images = await glob(`${dir}/cover/*.{png,jpeg}`)
-    images.sort()
-    const text = `${name} | ${scene}\n#${name.replaceAll(" ", "")} #${series.replaceAll(" ", "")}`
+    const images = await glob(`${dir}/dist/*.{png,jpeg}`)
+    const covers = await glob(`${dir}/cover/*.{png,jpeg}`)
+    covers.sort()
+    
+    const title = `${name} | ${scene}`
+    const template = process.env.POST_TEMPLATE.replaceAll("\\n", "\n")
+    let text = util.format(template, title, images.length, images.length)
+    text = `${text}\n#${name.replaceAll(" ", "")} #${series.replaceAll(" ", "")}`
     console.log(text)
-    await pushTelegram(text, images, h)
-    await pushTwitter(text, images, h)
-    console.log(`pushed ${dirName}`)
-    return true
+    const ans = await input("publish?")
+    if (ans == 'y') {
+        await pushTelegram(text, covers, h)
+        await pushTwitter(text, covers, h)
+        console.log(`pushed ${dirName}`)
+        return true
+    }
+    return false
 }
 
 async function main() {
@@ -78,6 +101,8 @@ async function main() {
     dirs.sort()
     const lockFileName = "push.lock"
     for (const dirName of dirs) {
+        const attrs = getAttrs(dirName)
+        if (!attrs) continue
         const absLockFile = path.join(baseDir, dirName, lockFileName)
         try {
             await fs.access(absLockFile, fs.constants.F_OK)
@@ -87,8 +112,8 @@ async function main() {
             const result = await push(path.join(baseDir, dirName))
             if (result) {
                 await fs.writeFile(absLockFile, "")
-                break
             }
+            break
         }
     }
 }
