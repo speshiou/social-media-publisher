@@ -1,13 +1,8 @@
 import fs from 'fs'
 import {execSync} from 'child_process'
 import path from 'path'
-import Jimp from "jimp";
+import sharp from 'sharp';
 import { glob } from 'glob'
-
-// const watermark = process.env.WATERMARK
-const watermarkFont = Jimp.FONT_SANS_32_WHITE
-const x = 10
-const y = 10
 
 async function findImages(dir) {
     const images = await glob(`${dir}/*.{png,jpeg}`)
@@ -43,7 +38,7 @@ function pickCovers(files, count) {
     return Array.from(results);
 }
 
-async function distAlbum(baseDir, watermark) {
+async function distAlbum(baseDir) {
     console.log(`found ${baseDir}`)
     const dirs = baseDir.split("/")
     const dirName = dirs[dirs.length - 1]
@@ -68,15 +63,17 @@ async function distAlbum(baseDir, watermark) {
     fs.mkdirSync(distDir)
     fs.rmSync(coverDir, { recursive: true, force: true });
     fs.mkdirSync(coverDir)
-    const font = await Jimp.loadFont(watermarkFont)
+    
     let markedImages = []
     for (let i = 0; i < images.length; i++) {
         const filename = images[i]
-        const image = await Jimp.read(filename)
-        // image.print(font, x, y, watermark)
-        image.composite(watermark, 0, 0)
-        const output = path.join(distDir, `${filenamePrefix}_${(i + 1).toString().padStart(3, "0")}.${image.getExtension()}`)
-        image.write(output)
+        const extName = path.extname(filename)
+        const output = path.join(distDir, `${filenamePrefix}_${(i + 1).toString().padStart(3, "0")}${extName}`)
+        await sharp(filename)
+        .modulate({ brightness: 1.1, saturation: 1.2 }) 
+        .composite([{ input: process.env.WATERMARK, gravity: sharp.gravity.northwest }])
+        .toFile(output)
+        
         console.log(output)
         markedImages.push(output)
     }
@@ -96,11 +93,10 @@ async function distAlbum(baseDir, watermark) {
 }
 
 async function main() {
-    const watermark = await Jimp.read(process.env.WATERMARK)
     const baseDir = process.env.BATCH_IMAGE_DIR
     const dirs = fs.readdirSync(baseDir)
     for (const dir of dirs) {
-        await distAlbum(path.join(baseDir, dir), watermark)
+        await distAlbum(path.join(baseDir, dir))
     }
 }
 
