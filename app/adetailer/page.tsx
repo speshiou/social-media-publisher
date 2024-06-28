@@ -7,12 +7,14 @@ import { PhotoIcon } from '@heroicons/react/24/solid'
 import { useState } from 'react'
 
 export default function Home() {
+  const [prompt, setPrompt] = useState<string>('')
   const [originalImage, setOriginalImage] = useState<string>()
   const [outputImage, setOutputImage] = useState<string>()
 
   async function onSubmit(formData: FormData) {
     const result = await restoreFaces(formData)
     if (result) {
+      setPrompt(result.prompt)
       setOutputImage(result.images[0])
     }
   }
@@ -33,6 +35,28 @@ export default function Home() {
     <main className="flex min-h-screen flex-col items-center justify-between p-24">
       <Form method="POST" onSubmit={onSubmit}>
         <DropArea name="file" onDrop={handleDrop}>
+          <div className="col-span-full">
+            <label
+              htmlFor="prompt"
+              className="block text-sm font-medium leading-6 text-gray-900"
+            >
+              Prompt
+            </label>
+            <div className="mt-2">
+              <textarea
+                id="prompt"
+                name="prompt"
+                rows={3}
+                className="block w-full rounded-md border-0 p-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                defaultValue={prompt}
+                value={prompt}
+                onChange={(e) => setPrompt(e.target.value)}
+              />
+            </div>
+            <p className="mt-3 text-sm leading-6 text-gray-600">
+              Write a few sentences about yourself.
+            </p>
+          </div>
           <div className="col-span-full">
             <label
               htmlFor="cover-photo"

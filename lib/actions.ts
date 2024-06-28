@@ -12,9 +12,9 @@ export async function restoreFaces(formData: FormData) {
     const buffer = Buffer.from(await file.arrayBuffer())
     const base64img = buffer.toString('base64')
     const image = sharp(buffer)
-    let conceptPrompt = ''
+    let conceptPrompt = formData.get('prompt') || ''
     const metadata = await image.metadata()
-    if (metadata.exif) {
+    if (!conceptPrompt && metadata.exif) {
       const imageData = exif(metadata.exif)?.Image
       if (imageData) {
         const userComment = imageData[exifUserComment]
@@ -36,7 +36,7 @@ export async function restoreFaces(formData: FormData) {
     })
     return {
       images: images,
-      prompt: conceptPrompt,
+      prompt: conceptPrompt as string,
     }
   }
   return null
