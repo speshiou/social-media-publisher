@@ -70,7 +70,7 @@ async function distAlbum(baseDir) {
         const extName = path.extname(filename)
         const output = path.join(distDir, `${filenamePrefix}_${(i + 1).toString().padStart(3, "0")}${extName}`)
         await sharp(filename)
-        .modulate({ brightness: 1.1, saturation: 1.2 }) 
+        .modulate({ brightness: 1.1, saturation: 1.15 }) 
         .composite([{ input: process.env.WATERMARK, gravity: sharp.gravity.northwest }])
         .toFile(output)
         
