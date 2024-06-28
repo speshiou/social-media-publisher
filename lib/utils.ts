@@ -1,4 +1,5 @@
 export const base64PngPrefix = 'data:image/png;base64,'
+export const exifUserComment = '37510'
 
 export function dateStamp() {
   const today = new Date()

@@ -11,9 +11,9 @@ export default function Home() {
   const [outputImage, setOutputImage] = useState<string>()
 
   async function onSubmit(formData: FormData) {
-    const images = await restoreFaces(formData)
-    if (images) {
-      setOutputImage(images[0])
+    const result = await restoreFaces(formData)
+    if (result) {
+      setOutputImage(result.images[0])
     }
   }
 
