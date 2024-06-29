@@ -10,6 +10,7 @@ export default function Home() {
   const [prompt, setPrompt] = useState<string>('')
   const [originalImage, setOriginalImage] = useState<string>()
   const [outputImage, setOutputImage] = useState<string>()
+  const [outputFileName, setOutputFileName] = useState<string>()
 
   async function onSubmit(formData: FormData) {
     const result = await restoreFaces(formData)
@@ -28,7 +29,9 @@ export default function Home() {
         setOutputImage(undefined)
       }
     }
-    reader.readAsDataURL(fileList[0])
+    const file = fileList[0]
+    reader.readAsDataURL(file)
+    setOutputFileName(file.name)
   }
 
   return (
@@ -107,7 +110,11 @@ export default function Home() {
           </div>
           <div className="grid grid-cols-2">
             {originalImage && <img src={originalImage} />}
-            {outputImage && <img src={outputImage} />}
+            {outputImage && (
+              <a href={outputImage} download={outputFileName}>
+                <img src={outputImage} />
+              </a>
+            )}
           </div>
         </DropArea>
       </Form>
