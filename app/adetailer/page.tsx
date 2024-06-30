@@ -4,22 +4,32 @@ import DropArea from '@/components/DropArea'
 import Form from '@/components/Form'
 import { restoreFaces } from '@/lib/actions'
 import { PhotoIcon } from '@heroicons/react/24/solid'
+import { useMutation } from '@tanstack/react-query'
 import { useState } from 'react'
 
-export default function Home() {
+export default function Page() {
   const [prompt, setPrompt] = useState<string>('')
   const [originalImage, setOriginalImage] = useState<string>()
   const [outputImage, setOutputImage] = useState<string>()
   const [outputFileName, setOutputFileName] = useState<string>()
 
-  async function onSubmit(formData: FormData) {
-    const result = await restoreFaces(formData)
-    if (result) {
+  const mutation = useMutation({
+    mutationFn: (formData: FormData) => {
+      return restoreFaces(formData)
+    },
+    onSuccess: (data) => {
       if (!prompt) {
-        setPrompt(result.prompt)
+        setPrompt(data.prompt)
       }
-      setOutputImage(result.images[0])
-    }
+      setOutputImage(data.images[0])
+    },
+    onError(error, variables, context) {
+      console.log(error)
+    },
+  })
+
+  async function onSubmit(formData: FormData) {
+    mutation.mutate(formData)
   }
 
   async function handleDrop(fileList: FileList) {
@@ -106,7 +116,7 @@ export default function Home() {
               type="submit"
               className="rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
             >
-              Inpaint
+              {mutation.isPending ? 'Generating ...' : 'Inpaint'}
             </button>
           </div>
           <div className="grid grid-cols-2">

@@ -16,7 +16,7 @@ export async function restoreFaces(formData: FormData) {
   const file = formData.get('file')
 
   if (!(file instanceof File)) {
-    return null
+    throw new Error('File is missing')
   }
   let genMetaData: GenMetaData = {}
   const buffer = Buffer.from(await file.arrayBuffer())
