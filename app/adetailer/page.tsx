@@ -15,7 +15,9 @@ export default function Home() {
   async function onSubmit(formData: FormData) {
     const result = await restoreFaces(formData)
     if (result) {
-      setPrompt(result.prompt)
+      if (!prompt) {
+        setPrompt(result.prompt)
+      }
       setOutputImage(result.images[0])
     }
   }

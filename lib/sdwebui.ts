@@ -94,11 +94,11 @@ export async function img2img(inputs: Img2ImgRequestData) {
 
   const data = await response.json()
   let images = data['images'] as string[]
-  images = images.map((image) => {
-    if (URL.canParse(image)) {
-      return image
-    }
-    return `${base64PngPrefix}${image}`
-  })
+  //   images = images.map((image) => {
+  //     if (URL.canParse(image)) {
+  //       return image
+  //     }
+  //     return `${base64PngPrefix}${image}`
+  //   })
   return images
 }
