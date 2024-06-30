@@ -5,7 +5,7 @@ import sharp from 'sharp';
 import { glob } from 'glob'
 
 async function findImages(dir) {
-    const images = await glob(`${dir}/*.{png,jpeg}`)
+    const images = await glob(`${dir}/*.{png,jpeg,jpg}`)
     images.sort()
     return images
 }
@@ -68,10 +68,11 @@ async function distAlbum(baseDir) {
     for (let i = 0; i < images.length; i++) {
         const filename = images[i]
         const extName = path.extname(filename)
-        const output = path.join(distDir, `${filenamePrefix}_${(i + 1).toString().padStart(3, "0")}${extName}`)
+        const output = path.join(distDir, `${filenamePrefix}_${(i + 1).toString().padStart(3, "0")}.jpg`)
         await sharp(filename)
         .modulate({ brightness: 1.1, saturation: 1.15 }) 
         .composite([{ input: process.env.WATERMARK, gravity: sharp.gravity.northwest }])
+        .jpeg()
         .toFile(output)
         
         console.log(output)
