@@ -3,6 +3,7 @@ import {execSync} from 'child_process'
 import path from 'path'
 import sharp from 'sharp';
 import { glob } from 'glob'
+import * as tsImport from 'ts-import';
 
 async function findImages(dir) {
     const images = await glob(`${dir}/*.{png,jpeg,jpg}`)
@@ -69,12 +70,18 @@ async function distAlbum(baseDir) {
         const filename = images[i]
         const extName = path.extname(filename)
         const output = path.join(distDir, `${filenamePrefix}_${(i + 1).toString().padStart(3, "0")}.jpg`)
-        await sharp(filename)
+        const buffer = await sharp(filename)
         .modulate({ brightness: 1.1, saturation: 1.15 }) 
         .composite([{ input: process.env.WATERMARK, gravity: sharp.gravity.northwest }])
-        .jpeg()
-        .toFile(output)
-        
+        .toBuffer()
+
+        console.log(`upscaling ${filename} ...`)
+        const base64img = buffer.toString('base64')
+
+        const sdwebui = await tsImport.load("lib/sdwebui.ts")
+        const upscaled = await sdwebui.upscale(base64img, "R-ESRGAN 4x+ Anime6B")
+        await sharp(Buffer.from(upscaled, 'base64')).jpeg().toFile(output)
+
         console.log(output)
         markedImages.push(output)
     }

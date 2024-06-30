@@ -1,5 +1,3 @@
-import { base64PngPrefix } from './utils'
-
 type Txt2ImgRequestData = {
   prompt: string
   negative_prompt?: string
@@ -54,6 +52,31 @@ type AnimateDiffInputs = {
   request_id: string
 }
 
+type UpscalerOptions =
+  | 'None'
+  | 'Lanczos'
+  | 'Nearest'
+  | 'ESRGAN_4x'
+  | 'LDSR'
+  | 'R-ESRGAN 4x+'
+  | 'R-ESRGAN 4x+ Anime6B'
+  | 'ScuNET GAN'
+  | 'ScuNET PSNR'
+  | 'SwinIR 4x'
+
+interface UpscaleInputs {
+  image: string
+  resize_mode: number
+  gfpgan_visibility: number
+  codeformer_visibility: number
+  codeformer_weight: number
+  upscaling_resize: number
+  upscaler_1: UpscalerOptions
+  upscaler_2: UpscalerOptions
+  extras_upscaler_2_visibility: number
+  upscale_first: boolean
+}
+
 export async function img2img(inputs: Img2ImgRequestData) {
   let payload: Img2ImgRequestData = {
     steps: 20,
@@ -101,4 +124,38 @@ export async function img2img(inputs: Img2ImgRequestData) {
   //     return `${base64PngPrefix}${image}`
   //   })
   return images
+}
+
+export async function upscale(
+  image: string,
+  upscaler_1: UpscalerOptions = 'R-ESRGAN 4x+',
+  upscaler_2: UpscalerOptions = 'None'
+) {
+  const payload: UpscaleInputs = {
+    resize_mode: 0,
+    gfpgan_visibility: 0,
+    codeformer_visibility: 0,
+    codeformer_weight: 0,
+    upscaling_resize: 2,
+    upscaler_1: upscaler_1,
+    upscaler_2: upscaler_2,
+    extras_upscaler_2_visibility: 0,
+    image: image,
+    upscale_first: false, // upscale before restoring faces (not
+    // applied if visibility = 0?)
+  }
+
+  const response = await fetch(
+    `${process.env.SD_WEBUI_HOST}/sdapi/v1/extra-single-image`,
+    {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(payload),
+    }
+  )
+
+  const result = await response.json()
+  return result.image
 }
