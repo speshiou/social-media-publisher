@@ -50,7 +50,7 @@ export async function restoreFaces(formData: FormData) {
   genMetaData.prompt = conceptPrompt
 
   const images = await img2img({
-    prompt: `score_9, score_8_up, score_7_up, ${conceptPrompt}, source_anime, <lora:Anime Summer Days 2 Style SDXL_LoRA_Pony Diffusion V6 XL:0.8>`,
+    prompt: `score_9, score_8_up, score_7_up, ${conceptPrompt}, source_anime, expressiveh, <lora:341353-382152-ExpressiveH (Hentai LoRa Style) エロアニメ-ponyxl:0.8>, <lora:Anime Summer Days 2 Style SDXL_LoRA_Pony Diffusion V6 XL:0.8>`,
     negative_prompt:
       'score_6, score_5, score_4, pony, muscular, furry, child, kid, monochrome, skinny, realistic, censored',
     width: metadata.width,
