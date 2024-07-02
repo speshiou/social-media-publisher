@@ -14,7 +14,11 @@ export async function GET(request: Request) {
         inline_keyboard: [
           [
             {
-              text: 'Terminate',
+              text: '🖥 Console',
+              url: instance.jupyter_url,
+            },
+            {
+              text: '⛔️ Terminate',
               url: `${process.env.HOST}/api/instances/${instance.id}`,
             },
           ],
